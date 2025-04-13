@@ -71,6 +71,61 @@ def get_random_testimonials():
         selected = testimonials
     return jsonify(selected)
 
+
+# 4. Enroll Course API
+@app.route('/enroll/<int:student_id>', methods=['POST'])
+def enroll_course(student_id):
+    data = request.get_json()
+    if 'course_id' not in data:
+        return jsonify({"error": "Missing field: course_id"}), 400
+
+    student = next((stu for stu in students if stu['id'] == student_id), None)
+    if not student:
+        return jsonify({"error": "Student not found."}), 404
+
+    course = next((course for course in courses if course['id'] == data['course_id']), None)
+    if not course:
+        return jsonify({"error": "Course not found."}), 404
+
+    if data['course_id'] in student['enrolled_courses']:
+        return jsonify({"error": "Student is already enrolled in this course."}), 400
+
+    student['enrolled_courses'].append(data['course_id'])
+    return jsonify({"message": "Course enrollment successful!", "student": student}), 200
+
+#5. Delete Course API
+@app.route('/drop/<int:student_id>', methods=['DELETE'])
+def drop_course(student_id):
+    data = request.get_json()
+    if 'course_id' not in data:
+        return jsonify({"error": "Missing field: course_id"}), 400
+
+    student = next((stu for stu in students if stu['id'] == student_id), None)
+    if not student:
+        return jsonify({"error": "Student not found."}), 404
+
+    if data['course_id'] not in student['enrolled_courses']:
+        return jsonify({"error": "Student is not enrolled in this course."}), 400
+
+    student['enrolled_courses'].remove(data['course_id'])
+    return jsonify({"message": "Course dropped successfully!", "student": student}), 200
+
+
+#6. Get all courses API
+@app.route('/courses', methods=['GET'])
+def get_all_courses():
+    return jsonify(courses)
+
+#7. Get student courses API
+@app.route('/student_courses/<int:student_id>', methods=['GET'])
+def get_student_courses(student_id):
+    student = next((stu for stu in students if stu['id'] == student_id), None)
+    if not student:
+        return jsonify({"error": "Student not found."}), 404
+
+    enrolled_courses = [course for course in courses if course['id'] in student['enrolled_courses']]
+    return jsonify(enrolled_courses)
+
 # add the other endpoints 4-7 arnav then delete this commetn
 
 
